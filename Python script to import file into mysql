@@ -1,0 +1,47 @@
+import pandas as pd
+from sqlalchemy import create_engine
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# MySQL credentials from .env file
+username = os.getenv("MYSQL_USER")
+password = os.getenv("MYSQL_PASSWORD")
+host = os.getenv("MYSQL_HOST", "localhost")
+port = os.getenv("MYSQL_PORT", 3306)
+database = os.getenv("MYSQL_DATABASE")
+
+# Create SQLAlchemy engine
+engine = create_engine(f'mysql+pymysql://{username}:{password}@{host}:{port}/{database}')
+
+# Map CSV files to MySQL table names
+csv_files = {
+    "blinkit_customer_feedback.csv": "blinkit_customer_feedback",
+    "blinkit_customers.csv": "blinkit_customers",
+    "blinkit_products.csv": "blinkit_products",
+    "blinkit_order_items.csv": "blinkit_order_items",
+    "blinkit_marketing_performance.csv": "blinkit_marketing_performance",
+    "blinkit_inventoryNew.csv": "blinkit_inventory_new",
+    "blinkit_delivery_performance.csv": "blinkit_delivery_performance",
+    "blinkit_inventory.csv": "blinkit_inventory",
+    "blinkit_orders.csv": "blinkit_orders"
+}
+
+print("All file mappings look good.")
+
+# Local path where your files are stored
+base_path = os.getenv("CSV_PATH")  # Add this in your .env file
+
+# Load CSV files into MySQL
+for file_name, table_name in csv_files.items():
+    try:
+        print(f"📥 Importing {file_name} into table `{table_name}`...")
+        df = pd.read_csv(os.path.join(base_path, file_name))
+        df.to_sql(name=table_name, con=engine, if_exists='replace', index=False)
+        print(f"✅ `{table_name}` imported successfully.")
+    except Exception as e:
+        print(f"❌ Error importing `{table_name}`: {e}")
+
+print("🎉 All files processed.")

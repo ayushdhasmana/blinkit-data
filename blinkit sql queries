@@ -1,0 +1,106 @@
+Easy queries (1-3)
+-- 1. How many total orders have been placed?
+SELECT COUNT(order_id) AS total_orders
+FROM blinkit_orders;
+
+
+-- 2. What is the average order value?
+SELECT AVG(order_total) AS average_order_value
+FROM blinkit_orders;
+
+
+-- 3. Find the top 7 customers who placed the most orders
+SELECT customer_id, customer_name, total_orders
+FROM blinkit_customers
+ORDER BY total_orders DESC
+LIMIT 7;
+
+Advanced queries (4-11)
+
+-- 4. Find the number of unique customers who have placed at least one order (with join)
+SELECT COUNT(DISTINCT blinkit_customers.customer_id) AS unique_customers
+FROM blinkit_customers
+JOIN blinkit_orders ON blinkit_customers.customer_id = blinkit_orders.customer_id;
+
+
+-- 5. Get the total revenue per customer
+SELECT 
+    blinkit_customers.customer_id,
+    customer_name,
+    SUM(order_total) AS total_spent
+FROM blinkit_customers
+JOIN blinkit_orders ON blinkit_customers.customer_id = blinkit_orders.customer_id
+GROUP BY blinkit_customers.customer_id, customer_name
+ORDER BY total_spent DESC;
+
+
+-- 6. Find the top 5 best-selling products
+SELECT 
+    blinkit_order_items.product_id,
+    product_name,
+    SUM(quantity) AS total_quantity_sold
+FROM blinkit_products
+JOIN blinkit_order_items ON blinkit_products.product_id = blinkit_order_items.product_id
+GROUP BY blinkit_order_items.product_id, product_name
+ORDER BY total_quantity_sold DESC
+LIMIT 5;
+
+
+-- 7. Find the top 3 cities with the highest order revenue
+SELECT 
+    blinkit_customers.area AS city,
+    SUM(blinkit_orders.order_total) AS total_revenue
+FROM blinkit_customers
+JOIN blinkit_orders ON blinkit_customers.customer_id = blinkit_orders.customer_id
+GROUP BY city
+ORDER BY total_revenue DESC
+LIMIT 3;
+
+
+-- 8. Find the best performing marketing campaign based on revenue
+SELECT 
+    campaign_id,
+    campaign_name,
+    SUM(revenue_generated) AS total_revenue_generated
+FROM blinkit_marketing_performance
+GROUP BY campaign_id, campaign_name
+ORDER BY total_revenue_generated DESC
+LIMIT 1;
+
+
+-- 9. Find the top 5 purchased products in the last available month in the dataset
+SELECT 
+    blinkit_customers.customer_id,
+    customer_name,
+    blinkit_products.product_name,
+    COUNT(blinkit_order_items.product_id) AS times_purchased
+FROM blinkit_customers
+JOIN blinkit_orders ON blinkit_customers.customer_id = blinkit_orders.customer_id
+JOIN blinkit_order_items ON blinkit_orders.order_id = blinkit_order_items.order_id
+JOIN blinkit_products ON blinkit_order_items.product_id = blinkit_products.product_id
+WHERE blinkit_orders.order_date >= '2024-10-01'
+GROUP BY blinkit_customers.customer_id, customer_name, blinkit_products.product_name
+ORDER BY times_purchased DESC
+LIMIT 5;
+
+
+-- 10. Find the order with the highest number of unique items
+SELECT 
+    blinkit_orders.order_id,
+    COUNT(DISTINCT product_id) AS unique_items
+FROM blinkit_orders
+JOIN blinkit_order_items ON blinkit_order_items.order_id = blinkit_orders.order_id
+GROUP BY blinkit_orders.order_id
+ORDER BY unique_items DESC
+LIMIT 1;
+
+
+-- 11. Rank customers by total spending
+SELECT 
+    blinkit_customers.customer_id,
+    blinkit_customers.customer_name,
+    SUM(blinkit_orders.order_total) AS total_spent,
+    RANK() OVER (ORDER BY SUM(blinkit_orders.order_total) DESC) AS ranked
+FROM blinkit_customers
+JOIN blinkit_orders ON blinkit_customers.customer_id = blinkit_orders.customer_id
+GROUP BY blinkit_customers.customer_id, customer_name;
